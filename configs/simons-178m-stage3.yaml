@@ -1,0 +1,106 @@
+# Simons-178M: real/synthetic post-training, warm-started from stage 2.
+model:
+  context_length: 32768
+  prediction_length: 512
+  patch_length: 32
+  width: 1024
+  layers: 12
+  heads: 16
+  near_context: 4096
+  far_pool: 8
+  far_min_history: 7680
+  stats_window: 8192
+  period_slots: 4
+  period_alpha: 0.05
+  period_local: 5.0
+  detector_mid: 7680
+  # Covariate roles, fixed-scale indicators and one-way read (simons.covariates).
+  covariates: true
+  binary_rows: true
+  fit_row: true
+  past_rows: false
+  read_after: 5
+  read_binary: true
+  # Forecast rules: guarded XReg.
+  xreg: true
+  xreg_guard: true
+  xreg_guard_margin: 0.9
+  xreg_guard_min: 0
+  rows_only_history: 0
+training:
+  stage: stage2
+  steps: 55000
+  seed: 8480
+  checkpoint_every: 2000
+  # Checkpoint all time blocks to fit 32,768-step context on two 80 GB GPUs.
+  checkpoint_blocks: 12
+  # Split packed rows into chunks to save memory; gradients differ only by summation order.
+  micro_batches: 2
+  # Corpus folder of train-*.parquet files (simons.training.data); override with --data.
+  data: data/example/train
+  validation_data: null
+  batch_size: 784
+  # Start at phase 1. Phase 0 still contributes to the real-token budget.
+  context_schedule: "1024:0.15,7680:0.45,32768:0.40"
+  synthetic_only_stages: 0
+  synthetic_ramp_steps: 0
+  warm_start: runs/simons-178m-stage2/checkpoint.pt
+  warm_start_stage: 1
+  rewarm_from: 0.15
+  rewarm_steps: 1000
+  lr_schedule: linear
+  warmup_fraction: 0.05
+  final_lr_fraction: 0.0
+  muon_lr: 0.002
+  adam_lr: 0.0005
+  muon_weight_decay: 0.0611
+  mup_base_width: 704
+  # Real windows: UniMax over (domain, subdomain) groups, at most 6 passes over a source.
+  mixture_cap_epochs: 6.0
+  stitch_from_stage: 2
+  far_from_stage: 2
+  augment_downsample: 0.4
+  augment_downsample_max: 8
+  augment_stretch: 0.25
+  augment_stretch_up: 0.5
+  augment_warp: 0.2
+  augment_warp_convex: 0.65
+  augment_censor: 0.2
+  augment_amplitude: 0.2
+  augment_sign_flip: 0.2
+  augment_time_flip: 0.1
+  augment_mixup: 0.2
+  augment_mixup_alpha: 1.5
+  # Synthetic rows: 40% of the packed rows, near region only.
+  synthetic_fraction: 0.4
+  synthetic_families: kernel,sarima,sde,step,spike,cauker,rhythm,wave,fpfn
+  synthetic_family_weights: 0.14,0.14,0.06,0.03,0.03,0.04,0.02,0.02,0.02
+  synthetic_noise: 0.3
+  synthetic_pad: 0.4
+  synthetic_pool_steps: 6
+  synthetic_pool_steps_long: 2
+  synthetic_augment: mix,season,filter,lattice
+  synthetic_augment_rate: 0.4
+  synthetic_augment_weights: 0.35,0.25,0.2,0.2
+  synthetic_observe: ""
+  synthetic_multi_fraction: 0.5
+  export_context_length: null
+  covariate_read_init: keep
+  # Share of coupled synthetic groups assigned covariate roles.
+  role_share: "0.4"
+  # Main covariate pass: synthetic effects, sibling pairs and real known-future windows
+  # (simons.training.covariates.stream; corpus format in covariates.windows).
+  covariate_weight: 0.025
+  covariate_data: data/example/covariates
+  # Synthetic/sibling bases: first train-*.parquet file, or first rows of each dataset
+  # subfolder. null uses data.
+  covariate_base_data: null
+  covariate_mix: "0.63,0.25,0.12"
+  covariate_tokens: 4096
+  covariate_max_batch: 128
+  covariate_workers: 3
+  covariate_history_weight: 0.1
+  # Real-window sampling weights: {source: weight} JSON; 0 excludes a source from this pass.
+  covariate_source_weights: null
+  covariate_exclude: null
+  covariate_norm: global

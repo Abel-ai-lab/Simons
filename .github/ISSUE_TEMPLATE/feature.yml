@@ -1,0 +1,16 @@
+name: Feature request
+description: Something Simons should do, or do differently.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What you need
+      description: The task you are trying to do, and what is missing today.
+    validations:
+      required: true
+  - type: textarea
+    id: how
+    attributes:
+      label: How it could work
+      description: The call or the behaviour you have in mind, if you have one.

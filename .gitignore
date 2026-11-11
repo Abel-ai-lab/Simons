@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# outputs of the README, scripts and notebook
+runs/
+data/
+models/
+results/

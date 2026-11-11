@@ -1,0 +1,48 @@
+[project]
+name = "simons"
+version = "0.1.0"
+description = "Simons: small, open time series foundation models for probabilistic forecasting"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.10"
+authors = [{ name = "Abel AI Lab" }]
+keywords = ["time series", "forecasting", "foundation model", "probabilistic forecasting"]
+dependencies = [
+    "torch>=2.5",
+    "numpy>=1.24",
+    "safetensors>=0.4",
+    "huggingface_hub>=0.23",
+    "datasets>=2.17",
+    "pyarrow>=15",
+    "pyyaml>=6",
+    "scipy>=1.10",
+]
+
+[project.urls]
+Repository = "https://github.com/Abel-ai-lab/Simons"
+"Model weights" = "https://huggingface.co/abel-lab"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "gluonts>=0.15"]  # GluonTS for the predictor's tests
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/simons"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "RUF", "SIM"]
+ignore = [
+    "B905",  # zip() pairs equal-length sequences
+    "C408",  # Allow dict(key=value) for keyword records
+    "SIM108",  # Allow if-else blocks
+    "SIM300",  # Preserve comparisons with upper-case array names
+    "SIM905",  # Allow whitespace-split lists of names
+]

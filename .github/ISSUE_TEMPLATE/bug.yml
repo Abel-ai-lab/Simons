@@ -1,0 +1,31 @@
+name: Bug report
+description: Simons fails, returns a wrong forecast, or runs much slower than expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The code you ran and what it printed, including the full error message.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: The result you expected, and why.
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Data
+      description: The shapes of the history and covariates, or a short script that generates data showing the problem.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: The model (for example abel-lab/Simons-60M), the Simons, Python and PyTorch versions, and the device.
+    validations:
+      required: true
