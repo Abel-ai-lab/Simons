@@ -34,7 +34,8 @@ Lower CRPS and MASE are better. Higher SQL skill is better.
   them known-future), SQL skill score relative to Seasonal Naive, with no task declared as trained
   on.
 - **[TIME](https://github.com/zqiao11/TIME):** 98 tasks, relative to Seasonal Naive (geometric mean
-  over tasks).
+  over tasks). All four models are on the
+  [leaderboard](https://huggingface.co/spaces/Real-TSF/TIME-leaderboard).
 
 The code of the three benchmark runs is in [`benchmarks/`](../benchmarks):
 
