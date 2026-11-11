@@ -19,6 +19,10 @@ corpus. It downloads about 330 MB from the Hugging Face Hub and needs about 7 GB
 The script writes `<output>/train`, `<output>/validation` and `<output>/covariates`, and setting
 `validation_data: <output>/validation` logs a validation loss.
 
+On the full public data, the first run downloads 22 GB, spends about 15 minutes loading the corpus,
+writes a 44 GB cache and needs more than 32 GB of system memory. Training Simons-25M end to end
+takes about 21 hours on one 96 GB GPU.
+
 ```shell
 pip install -e .
 
