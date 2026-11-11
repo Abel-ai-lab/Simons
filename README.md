@@ -1,6 +1,7 @@
 # Simons
 
 [![Hugging Face: Simons 1](https://img.shields.io/badge/Hugging%20Face-Simons%201-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/collections/abel-lab/simons-1-6ae3d4ce9705938e293c52dd)
+[![Release post](https://img.shields.io/badge/Abel%20AI%20Lab-Release%20post-0A66C2)](https://abel.ai/research/introducing-simons/)
 [![Built from nanoTSFM](https://img.shields.io/badge/built%20from-nanoTSFM-24292F?logo=github)](https://github.com/Abel-ai-lab/nanoTSFM)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![PyTorch 2.5+](https://img.shields.io/badge/PyTorch-2.5%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
@@ -76,6 +77,7 @@ bash scripts/train.sh 25m data/example/train data/example/covariates
 
 | | |
 |---|---|
+| [Introducing Simons](https://abel.ai/research/introducing-simons/) | The release post: what Simons is and how it performs |
 | [Getting started](docs/GETTING_STARTED.md) | Input formats, covariates, forecasting options, and fine-tuning |
 | [Models](docs/MODEL.md) | The four model sizes, scores, and benchmark runs |
 | [Training](docs/TRAINING.md) | Training stages, configurations, GPU and memory settings, and corpus formats |
