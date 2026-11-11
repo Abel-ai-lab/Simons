@@ -57,7 +57,7 @@ exclusions. Synthetic data isn't counted.
 ## Benchmark exclusions
 
 The training data excludes the test data of three benchmarks:
-[fev-bench](https://huggingface.co/spaces/autogluon/fev-leaderboard),
+[fev-bench](https://huggingface.co/spaces/autogluon/fev-bench),
 [GIFT-Eval](https://huggingface.co/spaces/Salesforce/GIFT-Eval), and
 [TIME](https://github.com/zqiao11/TIME).
 
