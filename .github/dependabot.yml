@@ -1,5 +1,5 @@
-# Monthly, grouped updates: one pull request for the workflow actions and one for the Python
-# dependencies.
+# Monthly, grouped updates of the workflow actions. Python dependencies are left out: the package
+# declares minimum versions, which should stay low, and it has no lock file to keep current.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -8,11 +8,4 @@ updates:
       interval: monthly
     groups:
       actions:
-        patterns: ["*"]
-  - package-ecosystem: pip
-    directory: /
-    schedule:
-      interval: monthly
-    groups:
-      python:
         patterns: ["*"]
