@@ -54,7 +54,8 @@ def rollout(model, history: torch.Tensor, horizon: int, series_ids: torch.Tensor
 def pass_size(c, window: torch.Tensor, covariates: torch.Tensor | None, steps: int,
               width: int, fit: bool):
     """Return (patch tokens, raw steps) per batch row for window [B,V,context_length].
-    Count `width` rows after skipping missing prefixes; `fit` includes one full-window row."""
+    Count `width` rows after skipping missing prefixes; `fit` adds one full-window row and the
+    other rows' inputs up to it."""
     context, patch = c.context_length, c.patch_length
     seen = torch.isfinite(window).flatten(0, -2).any(0)
     if covariates is not None:  # known-future rows hold each covariate one patch earlier
@@ -73,7 +74,14 @@ def pass_size(c, window: torch.Tensor, covariates: torch.Tensor | None, steps: i
         return width * tokens, width * length
     whole = (far_len // (patch * c.far_pool) + (context - far_len) // patch
              + math.ceil(steps / patch))
-    return (width - 1) * tokens + whole, (width - 1) * length + context + future
+    # An accepted fit row spans the window. The trunk computes and stores the other rows from
+    # their own start, but their input tokens and rotary tables are padded up to the fit row:
+    # about 2 KB per empty token on a GPU, a tenth of a computed token of the smallest model.
+    # They are charged a quarter of a token, which also keeps the step-domain work in bounds.
+    if not torch.isfinite(window).flatten(1).any(1).all():
+        return width * whole, width * (context + future)  # an unobserved item's rows run whole
+    spent = (width - 1) * tokens + whole
+    return spent + (width * whole - spent) // 4, (width - 1) * length + context + future
 
 
 def flip_back(q: torch.Tensor) -> torch.Tensor:

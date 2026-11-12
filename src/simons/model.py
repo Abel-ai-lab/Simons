@@ -245,9 +245,23 @@ def shared_rows(tokens: torch.Tensor, rotary, roles: torch.Tensor, crops: torch.
     return compute, torch.searchsorted(compute, rep)
 
 
-def time_blocks(blocks, x: torch.Tensor, start: torch.Tensor, rotary, crops):
-    """Run time blocks on x [N,S,W] with started flags [N,S] and optional row crops [N].
-    Columns before each crop retain x."""
+def crop_groups(crops: torch.Tensor) -> list:
+    """Return (crop, rows [R]) for each distinct value of crops [N]."""
+    return [(crop, torch.nonzero(crops == crop)[:, 0]) for crop in torch.unique(crops).tolist()]
+
+
+def from_position(x: list, groups: list, before: torch.Tensor, first: int, size: int):
+    """Return [N,S-first,W] from the groups' activations x (each [R,S-crop,W], from its crop).
+    Positions before a row's crop hold its `before` [N,W] vector."""
+    out = before.new_zeros(len(before), size - first, before.shape[-1]) + before[:, None]
+    for (crop, rows), xs in zip(groups, x):
+        out[rows, max(crop - first, 0):] = xs[:, max(first - crop, 0):]
+    return out
+
+
+def time_blocks(blocks, x, start: torch.Tensor, rotary, groups=None):
+    """Run time blocks on x [N,S,W] with started flags [N,S]. With `groups` (see `crop_groups`),
+    x and the result list each group's activations [R,S-crop,W] from its crop."""
 
     def run(x, start, rotary):
         position = torch.arange(x.shape[1], device=x.device)
@@ -257,23 +271,23 @@ def time_blocks(blocks, x: torch.Tensor, start: torch.Tensor, rotary, crops):
             x = block(x, mask, rotary=rotary)
         return x
 
-    if crops is None:
+    if groups is None:
         return run(x, start, rotary)
-    out = x.clone()
-    for crop in torch.unique(crops).tolist():
-        rows = torch.nonzero(crops == crop)[:, 0]
-        xs, ss = x[rows, crop:], start[rows, crop:]
+    out = []
+    for (crop, rows), xs in zip(groups, x):
+        ss = start[rows, crop:]
         rs = tuple(t[rows][:, :, crop:] for t in rotary)
         shared, length = constant_prefix(xs, ss)
         if shared is None:
-            out[rows, crop:] = run(xs, ss, rs)
+            out.append(run(xs, ss, rs))
             continue
-        rest = torch.ones(len(rows), dtype=torch.bool, device=x.device)
+        rest = torch.ones(len(rows), dtype=torch.bool, device=xs.device)
         rest[shared] = False
-        out[rows[shared], crop:] = prefix_blocks(blocks, xs[shared],
-                                                 tuple(t[shared] for t in rs), length)
+        y = torch.empty_like(xs)
+        y[shared] = prefix_blocks(blocks, xs[shared], tuple(t[shared] for t in rs), length)
         if bool(rest.any()):
-            out[rows[rest], crop:] = run(xs[rest], ss[rest], tuple(t[rest] for t in rs))
+            y[rest] = run(xs[rest], ss[rest], tuple(t[rest] for t in rs))
+        out.append(y)
     return out
 
 
@@ -327,11 +341,10 @@ def prefix_blocks(blocks, x: torch.Tensor, rotary, length: int) -> torch.Tensor:
 
 def attend_targets(block, x, source, mine, mask, batch: int, variates: int, targets: int,
                    size: int, explicit: bool = False, first: int = 0) -> torch.Tensor:
-    """Apply a cross-row block to each item's first T rows: x [M,S,W] -> [B*T,S-first,W].
-    `source` [B*V] and `mine` [B*T] index x; mask [B*S,1,T,V] selects keys from all rows.
-    `explicit` uses fp32 softmax."""
+    """Apply a cross-row block to each item's first T rows: x [M,S-first,W] -> [B*T,S-first,W].
+    x holds positions from `first`; `source` [B*V] and `mine` [B*T] index it; mask [B*S,1,T,V]
+    selects keys from all rows. `explicit` uses fp32 softmax."""
     if first:
-        x = x[:, first:]
         mask = mask.view(batch, size, *mask.shape[1:])[:, first:].flatten(0, 1)
         size -= first
     width, heads = x.shape[-1], block.heads
@@ -602,7 +615,8 @@ class Simons(nn.Module):
                tail: int | None = None):
         """Return [B,T,tail,width] features of the first T = `targets` rows (default: all) at the
         last `tail` positions (default: all); the first `far_tokens` tokens are pooled history.
-        `roles` [B,V]: covariate rows' roles (covariate rows follow the targets)."""
+        `roles` [B,V]: covariate rows' roles (covariate rows follow the targets); the tail must
+        then start at or after every target row's first observed token."""
         batch, variates, size, _ = tokens.shape
         tail = size if tail is None else tail
         start = started.reshape(batch * variates, size)
@@ -631,15 +645,18 @@ class Simons(nn.Module):
                                       roles.reshape(-1), crops, ~reads)
         if compute is None:
             compute = source = torch.arange(batch * variates, device=tokens.device)
-        # Time blocks ignore positions before each row's crop.
+        # Time blocks ignore positions before each row's crop, so x keeps each crop's rows from
+        # it: a whole-window fit row does not make the short rows of its item any longer.
         own = tokens.reshape(batch * variates, size, -1)[compute]
         later = torch.arange(size, device=tokens.device)[None] >= crops[compute][:, None]
         embedded = self._embed(own[later], far_tokens, mixed, torch.nonzero(later)[:, 1])
-        x = embedded.new_zeros(*own.shape[:2], embedded.shape[-1])
-        x[later] = embedded
-        x = x + self.covariates.role_vectors(roles).reshape(batch * variates, -1)[compute][
-            :, None].to(x.dtype)
-        part = (start[compute], tuple(t[compute] for t in rotary), crops[compute])
+        role = self.covariates.role_vectors(roles).reshape(batch * variates, -1)[compute].to(
+            embedded.dtype)
+        index = torch.zeros_like(later, dtype=torch.long)
+        index[later] = torch.arange(len(embedded), device=tokens.device)
+        groups = crop_groups(crops[compute])
+        x = [embedded[index[r, crop:]] + role[r][:, None] for crop, r in groups]
+        part = (start[compute], tuple(t[compute] for t in rotary), groups)
         cut = read_after + 1 if read_after >= 0 else len(blocks)
         x = time_blocks(blocks[:cut], x, *part)
         rows = (torch.arange(batch, device=tokens.device)[:, None] * variates
@@ -648,17 +665,21 @@ class Simons(nn.Module):
             mask, update = read_mask(roles, related, size)
             mine = source[rows]
             first = int(crops[rows].min())
-            y = attend_targets(self.covariates.read, x, source, mine, mask[:, :, :targets],
+            seen = from_position(x, groups, role, first, size)
+            y = attend_targets(self.covariates.read, seen, source, mine, mask[:, :, :targets],
                                batch, variates, targets, size, explicit=True, first=first)
             u = update[:, :targets].reshape(batch, size, targets, 1)[:, first:].transpose(
                 1, 2).reshape(batch * targets, size - first, 1).to(y.dtype)
-            current = x[mine, first:]
+            current = seen[mine]
             y = current + u * (y - current)
             keep = reads[rows]  # Reading targets cannot share rows.
-            x = x.clone()
-            x[mine[keep], first:] = y[keep]
+            seen[mine[keep]] = y[keep]
+            # Target rows' crops are at or after `first`, and nothing reads a row before its crop.
+            x = [xs if crop < first else seen[r, crop - first:]
+                 for (crop, r), xs in zip(groups, x)]
             x = time_blocks(blocks[cut:], x, *part)
-        y = attend_targets(self.variate_block, x, source, source[rows], related[:, :, :targets],
+        last = from_position(x, groups, role, size - tail, size)
+        y = attend_targets(self.variate_block, last, source, source[rows], related[:, :, :targets],
                            batch, variates, targets, size, first=size - tail)
         return y.reshape(batch, targets, tail, -1)
 

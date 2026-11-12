@@ -7,6 +7,7 @@ import pytest
 import torch
 
 from simons import Simons, SimonsConfig, forecast_items, forecast_series, periodicity
+from simons.forecast import pass_size
 
 TINY = SimonsConfig(context_length=1024, prediction_length=64, patch_length=32, width=64,
                         layers=2, heads=4, near_context=512, far_pool=2, far_min_history=256,
@@ -85,6 +86,32 @@ def test_covariates_that_would_be_misread_raise():
         forecast_items(model, [(history[0].numpy(), covariates[0, :, :300].numpy())], 24)
     with pytest.raises(ValueError):
         model.forecast(history, 24, series_ids=[[0, 1]], covariates=covariates)
+
+
+def test_negative_series_ids_do_not_change_the_forecast():
+    config = dataclasses.replace(TINY, covariates=True, read_after=0, views=False,
+                                 integer_snap=False)
+    torch.manual_seed(0)
+    model = Simons(config).eval()
+    torch.manual_seed(44)
+    history, covariates = torch.randn(1, 100), torch.randn(1, 1, 133)
+    ids = [torch.tensor([[i]]) for i in (0, -1000, -1001, -2**63)]
+    ids.append(torch.tensor([[0]], dtype=torch.uint8))
+    q = [model.forecast(history, 33, series_ids=i, covariates=covariates) for i in ids]
+    assert all(torch.equal(q[0], other) for other in q[1:])
+
+
+def test_pass_size_charges_the_rows_padded_up_to_a_fit_row():
+    window = torch.full((3, 1, 1024), float("nan"))
+    window[..., -100:] = 1.0
+    covariates = torch.ones(3, 4, 1024 + 64)
+    covariates[..., :-164] = float("nan")
+    whole = 8 + 16 + 2  # far, near and future tokens of the whole window
+    assert pass_size(TINY, window, covariates, 64, 6, False)[0] == 6 * (5 + 2)
+    spent = 5 * (5 + 2) + whole  # five short rows and the fit row
+    assert pass_size(TINY, window, covariates, 64, 6, True)[0] == spent + (6 * whole - spent) // 4
+    window[1] = float("nan")  # an item without history: its covariate rows run the whole window
+    assert pass_size(TINY, window, covariates, 64, 6, True)[0] == 6 * whole
 
 
 def test_far_min_history_at_or_beyond_the_context_keeps_no_far_tokens(model):
