@@ -7,4 +7,4 @@ from .model import Simons
 
 __all__ = ["QUANTILES", "Simons", "SimonsConfig", "encode_categorical", "forecast",
            "forecast_items", "forecast_series", "prepare_covariates"]
-__version__ = "0.1.0"
+__version__ = "0.1.1"
