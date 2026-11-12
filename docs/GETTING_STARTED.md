@@ -39,7 +39,8 @@ Each multivariate row holds up to 32 variates.
 - **Time order.** The last value of `history` is the most recent one. The forecast starts at the
   next step.
 - **Missing values.** Use `NaN`. To batch series of different lengths, left-pad the shorter ones
-  with `NaN`, or use `forecast_series` below.
+  with `NaN`, or use `forecast_series` below. A variate with no observed value in the context is
+  forecast as zero.
 - **Context.** The model reads the last 16,384 steps (Simons-25M and 60M) or 32,768 steps
   (Simons-178M and 297M). Longer histories are cut to that length.
 - **Frequency.** The model reads values without frequency labels or timestamps.

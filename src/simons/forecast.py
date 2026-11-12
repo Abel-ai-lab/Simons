@@ -438,6 +438,8 @@ def forecast(model, history, horizon: int, series_ids=None, covariates=None,
             result = _post_process(model, history, result)
     finally:
         model.train(was_training)
+    observed = torch.isfinite(history).any(-1)  # [B,V]: a variate with no observed value gets 0
+    result = torch.where(observed[..., None, None], result, 0.0)
     return result[:, 0] if univariate else result
 
 
