@@ -164,10 +164,11 @@ def covariate_rows(config, values: torch.Tensor, series_ids: torch.Tensor,
     roles = torch.cat(extra_roles, 1)
     used = torch.cat(extra_used, 1)
     rows = torch.where(used[..., None], rows, float("nan"))
-    # Unique IDs and zero role vectors isolate unused rows.
+    # Callers' IDs become 0, 1, ...; negative IDs and zero role vectors isolate unused rows.
     k = rows.shape[1]
-    lone = (-1000 - torch.arange(k, device=values.device))[None].expand(batch, k)
-    ids = torch.where(used, series_ids[:, :1].expand(batch, k), lone.to(series_ids.dtype))
+    series_ids = torch.unique(series_ids, return_inverse=True)[1]
+    lone = (-1 - torch.arange(k, device=values.device))[None].expand(batch, k)
+    ids = torch.where(used, series_ids[:, :1].expand(batch, k), lone)
     roles = torch.where(used, roles, ROLE_TARGET)
     target_roles = torch.zeros(batch, variates, dtype=roles.dtype, device=roles.device)
     grown = (torch.cat([values, rows], 1), torch.cat([series_ids, ids], 1),
