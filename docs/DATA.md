@@ -27,7 +27,7 @@ The split covers all the real training data, after the benchmark exclusions.
 
 | | Public | Private data |
 |---|---|---|
-| Share of real training tokens | 66.02% | 33.97% |
+| Share of stored observations | 63.08% | 36.92% |
 | Datasets or sources | 70 dataset families | 111 sources |
 | Covariate collections | 61 | 59 |
 
@@ -36,20 +36,20 @@ The split covers all the real training data, after the benchmark exclusions.
 The table covers all the real training data, public and private, after the benchmark
 exclusions. Synthetic data isn't counted.
 
-| Domain | Share of real training tokens |
+| Domain | Share of stored observations |
 |---|---|
-| Transport | 15.34% |
-| Environment | 15.27% |
-| Health | 11.86% |
-| Computing | 11.67% |
-| Energy | 11.47% |
-| Industry | 10.95% |
-| Human activity | 7.64% |
-| Economics and finance | 7.63% |
-| Media attention | 7.62% |
-| Commerce | 0.41% |
-| Physical sciences | 0.12% |
-| Society | 0.01% |
+| Transport | 24.88% |
+| Environment | 23.64% |
+| Computing | 18.35% |
+| Economics and finance | 15.75% |
+| Energy | 3.80% |
+| Industry | 3.67% |
+| Human activity | 3.47% |
+| Media attention | 3.15% |
+| Health | 3.06% |
+| Commerce | 0.20% |
+| Physical sciences | 0.03% |
+| Society | <0.01% |
 | Multidomain | <0.01% |
 | Agriculture | <0.01% |
 | **Total** | 100.00% |
