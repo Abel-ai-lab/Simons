@@ -1,4 +1,7 @@
-"""Prepare known-future covariate rows and in-context ridge fits for forecasting."""
+"""Prepare covariate rows and in-context ridge fits for forecasting: known-future covariates
+and, for a checkpoint with `past_rows`, past-only ones (no value from the forecast origin on)."""
+
+import math
 
 import numpy as np
 import torch
@@ -35,10 +38,10 @@ class CovariateModules(nn.Module):
 
 def read_mask(roles, related, size: int):
     """(mask [B*S,1,V,V], update [B*S,V,1]) from roles [B,V] and related [B*S,1,V,V]: a target
-    row reads itself and its group's known-future, indicator and fit rows."""
+    row reads itself and its group's known-future, past, indicator and fit rows."""
     variates = roles.shape[1]
     r = roles.repeat_interleave(size, 0)
-    key = (r == ROLE_KNOWN) | (r == ROLE_FIT) | (r == ROLE_BINARY)
+    key = (r == ROLE_KNOWN) | (r == ROLE_PAST) | (r == ROLE_FIT) | (r == ROLE_BINARY)
     cross = (r == ROLE_TARGET)[:, :, None] & key[:, None, :] & related[:, 0]
     eye = torch.eye(variates, dtype=torch.bool, device=roles.device)[None]
     return (cross | eye)[:, None], cross.any(-1)[..., None]
@@ -129,26 +132,37 @@ def covariate_rows(config, values: torch.Tensor, series_ids: torch.Tensor,
                    skip: int = 0):
     """Append covariates [B,C,>=L] to values [B,V,L]; return values [B,V',L], ids/roles [B,V'].
     Return None if unusable; fit_keep [B] selects fits. Inputs omit `skip` all-missing steps.
-    With `skip`, append the fit prefix [B,skip] (NaN if invalid), or None without a fit row."""
+    With `skip`, append the fit prefix [B,skip] (NaN if invalid), or None without a fit row.
+    With `past_rows`, values end with the future patches: a covariate without a value from the
+    forecast origin on is a past row, unshifted, and outside the fit. The rule holds per call: a
+    known-future column that runs out is a past row in the rollout passes after its last value,
+    and one whose first future value lies beyond this pass is a past row here (XReg, which sees
+    the whole horizon, may still fit it)."""
     patch = config.patch_length
     batch, variates, length = values.shape
     cov = covariates.to(device=values.device, dtype=values.dtype)
     if cov.shape[-1] < length:
         cov = F.pad(cov, (0, length - cov.shape[-1]), value=float("nan"))
     cov = cov[..., :length]
-    position = torch.arange(length, device=values.device)
-    last = torch.where(torch.isfinite(values), position, -1).amax(-1).amax(-1)
     finite = torch.isfinite(cov)
     valid = varying(cov, finite)
-    known = valid & (finite & (position > last[:, None, None])).any(-1)  # [B,C]
-    keep = known.any(0)
+    if config.past_rows:
+        origin = length - math.ceil(config.prediction_length / patch) * patch
+        known = valid & finite[..., origin:].any(-1)  # [B,C]
+        past = valid & ~known
+    else:
+        position = torch.arange(length, device=values.device)
+        last = torch.where(torch.isfinite(values), position, -1).amax(-1).amax(-1)
+        known = valid & (finite & (position > last[:, None, None])).any(-1)
+        past = torch.zeros_like(known)
+    keep = (known | past).any(0)
     if not bool(keep.any()):
         return None
-    cov, known = cov[:, keep], known[:, keep]
+    cov, known, past = cov[:, keep], known[:, keep], past[:, keep]
     shifted, two = known_rows(cov, known, config.binary_rows, patch)
-    roles = torch.where(two, ROLE_BINARY, ROLE_KNOWN)
-    rows = torch.where(known[..., None], shifted, float("nan"))
-    extra, extra_roles, extra_used = [rows], [roles], [known]
+    roles = torch.where(two, ROLE_BINARY, torch.where(known, ROLE_KNOWN, ROLE_PAST))
+    rows = torch.where(known[..., None], shifted, torch.where(past[..., None], cov, float("nan")))
+    extra, extra_roles, extra_used = [rows], [roles], [known | past]
     head = None
     if config.fit_row and variates == 1:
         fit, ok = ridge_fit(values[:, 0], cov, known, skip=skip)
@@ -306,24 +320,27 @@ def prepare_covariates(length: int, horizon: int, future=None, past=None,
     return covs if len(covs) else None
 
 
-def usable_covariates(history: torch.Tensor, covariates: torch.Tensor, horizon: int):
-    """Keep usable covariates [B,C,T+horizon] for history [B,V,T]; return None when empty."""
+def usable_covariates(history: torch.Tensor, covariates: torch.Tensor, horizon: int,
+                      past_rows: bool = False):
+    """Keep usable covariates [B,C,T+horizon] for history [B,V,T]; return None when empty.
+    Without `past_rows`, drop the past-only ones (no value after the targets' last step)."""
     t = history.shape[-1]
     cov = covariates.clone()
     finite = torch.isfinite(cov)
-    position = torch.arange(t, device=history.device)
-    seen = torch.isfinite(history).any(1)  # [B,T]
-    last = torch.where(seen, position, -1).amax(-1)  # [B]
-    hist = finite[..., :t]
-    late = hist & (position > last[:, None])[:, None]
-    keep = finite[..., t:].any(-1) | late.any(-1)
-    if t > horizon:
-        cut = position < t - horizon
-        last_b = torch.where(seen & cut, position, -1).amax(-1)
-        in_block = cut & (position > last_b[:, None])
-        keep |= (hist & in_block[:, None]).any(-1)
-    cov = torch.where(keep[..., None], cov, float("nan"))
-    finite = torch.isfinite(cov)
+    if not past_rows:
+        position = torch.arange(t, device=history.device)
+        seen = torch.isfinite(history).any(1)  # [B,T]
+        last = torch.where(seen, position, -1).amax(-1)  # [B]
+        hist = finite[..., :t]
+        late = hist & (position > last[:, None])[:, None]
+        keep = finite[..., t:].any(-1) | late.any(-1)
+        if t > horizon:
+            cut = position < t - horizon
+            last_b = torch.where(seen & cut, position, -1).amax(-1)
+            in_block = cut & (position > last_b[:, None])
+            keep |= (hist & in_block[:, None]).any(-1)
+        cov = torch.where(keep[..., None], cov, float("nan"))
+        finite = torch.isfinite(cov)
     # Compare values exactly; floating-point variance can be nonzero for a constant.
     low = torch.where(finite, cov, float("inf")).amin(-1)
     high = torch.where(finite, cov, float("-inf")).amax(-1)

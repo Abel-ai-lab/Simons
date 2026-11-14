@@ -84,8 +84,15 @@ weather forecasts, planned prices and promotions.
   weather forecast, not the weather that was observed later.
 - **Missing values.** Use `NaN` where a value is unknown.
 - **Sharing.** The variates of one series share its covariates.
-- **Limits.** The released models read up to 16 covariates per series and ignore past-only
-  covariates. A covariate with fewer than two distinct values is dropped.
+- **Limits.** The released models read up to 16 covariates per series. A covariate with fewer than
+  two distinct values is dropped.
+- **Past-only covariates (experimental).** A covariate with no value after the target's last
+  observation is ignored by default. Load the model with `past_rows=True` and it is read as an
+  extra row of the series: `Simons.from_pretrained("abel-lab/Simons-297M", past_rows=True)`. Pass
+  it as `past_covariates` to `forecast_series`, or with `NaN` over the horizon in the tensor form.
+  A known-future covariate that stops partway through the horizon is then read the same way
+  after its last value. Forecasts with no covariates, or with covariates that all reach the end of
+  the horizon, are unchanged.
 
 With tensors, pass numeric covariates as `[batch, covariates, time + horizon]`:
 
