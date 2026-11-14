@@ -1,5 +1,6 @@
 """Patch transformer producing nine quantiles of the next `prediction_length` steps."""
 
+import dataclasses
 import json
 import math
 from contextlib import nullcontext
@@ -417,9 +418,11 @@ class Simons(nn.Module):
                 self.covariates = CovariateModules(config, Block)
 
     @classmethod
-    def from_pretrained(cls, name_or_path, device="cpu", revision=None) -> "Simons":
+    def from_pretrained(cls, name_or_path, device="cpu", revision=None,
+                        past_rows: bool = False) -> "Simons":
         """Load config.json and model.safetensors from a local folder or Hub repo, in eval mode.
-        `revision` selects a Hub branch, tag or commit; `device` sets the model device."""
+        `revision` selects a Hub branch, tag or commit; `device` sets the model device.
+        `past_rows` (experimental) makes the model read past-only covariates as rows."""
         from safetensors.torch import load_file
 
         path = Path(name_or_path).expanduser()
@@ -431,7 +434,10 @@ class Simons(nn.Module):
 
             path = Path(snapshot_download(str(name_or_path), revision=revision,
                                           allow_patterns=["config.json", "model.safetensors"]))
-        model = cls(SimonsConfig.from_json(path / "config.json"))
+        config = SimonsConfig.from_json(path / "config.json")
+        if past_rows:
+            config = dataclasses.replace(config, past_rows=True)
+        model = cls(config)
         model.load_state_dict(load_file(path / "model.safetensors"))
         return model.to(device).eval()
 
@@ -511,7 +517,7 @@ class Simons(nn.Module):
 
     def _skip(self, values: torch.Tensor, covariates: torch.Tensor | None) -> int:
         """Return unobserved far-prefix steps in multiples of SKIP_TOKENS far tokens.
-        Known-future covariates occupy positions one patch earlier."""
+        Known-future covariates occupy positions one patch earlier, past-only ones their own."""
         c = self.config
         patch = c.patch_length
         unit = SKIP_TOKENS * patch * c.far_pool
