@@ -47,17 +47,8 @@ The code of the three benchmark runs is in [`benchmarks/`](../benchmarks):
 
 ## Forecast options
 
-By default, forecasts combine transformed views of the history: the history itself, its sign
-flip and, for a nonnegative history, its square root and negated square root. Pass `views=False`
-to turn off these views.
-
-With covariates, a series with at most one nonzero observed value gets no square-root views.
-Once normalized, `[0, ..., 0, v]` and `[0, ..., 0, √v]` look the same to the model, so squaring
-the square-root forecast back squares its relative growth. Forecasts without covariates are
-unchanged. Scores reported before this change, including those above, used v0.1.1; install that
-version to reproduce them.
-
-See [Getting started](GETTING_STARTED.md) for the input format,
+By default, forecasts combine transformed views of the history. Pass `views=False` to turn off
+these views. See [Getting started](GETTING_STARTED.md) for the input format,
 [covariates](GETTING_STARTED.md#covariates) and [fine-tuning](GETTING_STARTED.md#fine-tune), the
 README for the [training quickstart](../README.md#train), and [Training](TRAINING.md) for the
 recipe of the released models.
