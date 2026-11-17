@@ -60,7 +60,7 @@ def pass_size(c, window: torch.Tensor, covariates: torch.Tensor | None, steps: i
     seen = torch.isfinite(window).flatten(0, -2).any(0)
     if covariates is not None:  # known-future rows hold each covariate one patch earlier
         cov = torch.isfinite(covariates[..., :context]).flatten(0, -2).any(0)
-        seen |= cov | F.pad(cov[patch:], (0, patch), value=False)  # past rows: in place
+        seen |= cov | F.pad(cov[patch:], (0, patch), value=False)
     position = torch.arange(context, device=window.device)
     first = int(torch.where(seen, position, context - 1).amin())
     far_len = max(0, context - c.near_context)
@@ -337,8 +337,7 @@ def _backtest_covariates(covariates: torch.Tensor, horizon: int) -> torch.Tensor
 
 
 def _covariate_rules(model, history, horizon, series_ids, covariates, views, mixed):
-    """Select XReg per row using history length and a held-out pinball-loss comparison.
-    Past-only covariates stay rows in every variant; XReg fits the known-future ones."""
+    """Select XReg per row using history length and a held-out pinball-loss comparison."""
     c = model.config
     batch, device = history.shape[0], history.device
     observed = torch.isfinite(history).sum(-1).amin(-1)
@@ -348,8 +347,6 @@ def _covariate_rules(model, history, horizon, series_ids, covariates, views, mix
         long = observed > c.rows_only_history
     else:
         long = torch.zeros(batch, dtype=torch.bool, device=device)
-    if c.past_rows:  # XReg has nothing to fit on an item with past-only covariates
-        long = long | ~torch.isfinite(covariates[..., -horizon:]).flatten(1).any(-1)
     guard = ~long & (observed >= max(c.xreg_guard_min, horizon + 64))
     if not c.xreg_guard:
         guard = torch.zeros_like(guard)
@@ -424,7 +421,7 @@ def forecast(model, history, horizon: int, series_ids=None, covariates=None,
     history = history[..., -context:]
     if covariates is not None:
         covariates = usable_covariates(history, covariates[..., -(history.shape[-1] + horizon):],
-                                       horizon, c.past_rows)
+                                       horizon)
     if covariates is not None:
         several = (series_ids != series_ids[:, :1]).any(-1)
         if bool((several & torch.isfinite(covariates).flatten(1).any(-1)).any()):

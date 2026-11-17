@@ -6,20 +6,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 import torch
-from torch.nn import functional as F
 
 from simons import Simons, SimonsConfig, forecast_series, prepare_covariates
-from simons.covariates import (
-    ROLE_FIT,
-    ROLE_KNOWN,
-    ROLE_PAST,
-    ROLE_TARGET,
-    covariate_rows,
-    encode_categorical,
-    read_mask,
-    usable_covariates,
-    xreg_fit,
-)
+from simons.covariates import encode_categorical, usable_covariates
 
 FIXTURE = Path(__file__).parent / "fixtures" / "covariates"
 
@@ -32,30 +21,6 @@ def tiny():
 @pytest.fixture(scope="module")
 def cases():
     return dict(np.load(FIXTURE / "cases.npz"))
-
-
-@pytest.fixture(scope="module")
-def past(tiny):
-    """The fixture checkpoint with `past_rows` on."""
-    model = Simons(dataclasses.replace(tiny.config, past_rows=True)).eval()
-    model.load_state_dict(tiny.state_dict())
-    return model
-
-
-@pytest.fixture
-def roles(monkeypatch):
-    """The roles [B,V'] of every `covariate_rows` call the model makes."""
-    import simons.model as model_module
-
-    seen, rows = [], model_module.covariate_rows
-
-    def recorded(*args, **kwargs):
-        grown = rows(*args, **kwargs)
-        seen.append(grown[2])
-        return grown
-
-    monkeypatch.setattr(model_module, "covariate_rows", recorded)
-    return seen
 
 
 def test_matches_training_code(tiny, cases):
@@ -193,133 +158,6 @@ def test_row_crop_and_shared_rows_are_exact(tiny, cases, monkeypatch):
     monkeypatch.setattr(model_module, "shared_rows", lambda *_: (None, None))
     full = tiny.forecast(history, 16, covariates=covs)
     torch.testing.assert_close(fast, full, rtol=1e-5, atol=1e-5, equal_nan=True)
-
-
-def test_past_rows_read_history_only_covariates(past, cases, roles, monkeypatch):
-    history = torch.from_numpy(cases["cov_history"])
-    past_only = torch.from_numpy(cases["cov_covariates"])[:, 3:4]
-    plain = past.forecast(history, 16)
-    monkeypatch.setattr(sys.modules["simons.forecast"], "xreg_fit", None)  # XReg must not run
-    q = past.forecast(history, 16, covariates=past_only)
-    assert not torch.allclose(q, plain, rtol=1e-3, atol=1e-3)
-    assert {int(r) for used in roles for r in used.unique()} == {ROLE_TARGET, ROLE_PAST}
-
-
-def test_targets_read_past_rows():
-    related = torch.ones(1, 1, 2, 2, dtype=torch.bool)
-    mask, update = read_mask(torch.tensor([[ROLE_TARGET, ROLE_PAST]]), related, 1)
-    assert mask[0, 0].tolist() == [[True, True], [False, True]] and update[0, :, 0].tolist() == [
-        True, False]
-
-
-def test_past_or_known_is_decided_at_the_forecast_origin(tiny, past):
-    torch.manual_seed(0)
-    values = F.pad(torch.randn(1, 1, 1024), (0, 64), value=float("nan"))
-    values[..., 1000:] = float("nan")  # the target stops 24 steps before the origin
-    covs = torch.randn(1, 2, 1088)
-    covs[0, 0, 1024:] = float("nan")  # no value from the origin on
-    covs[0, 1, 1025:] = float("nan")  # one value at the origin
-    ids = torch.zeros(1, 1, dtype=torch.long)
-    rows, _, roles = covariate_rows(past.config, values, ids, covs)
-    assert roles[0, :3].tolist() == [ROLE_TARGET, ROLE_PAST, ROLE_KNOWN]
-    torch.testing.assert_close(rows[0, 1], covs[0, 0], rtol=0, atol=0, equal_nan=True)
-    torch.testing.assert_close(rows[0, 2, :-32], covs[0, 1, 32:], rtol=0, atol=0, equal_nan=True)
-    roles = covariate_rows(tiny.config, values, ids, covs)[2]  # off: after the target's last step
-    assert roles[0, :3].tolist() == [ROLE_TARGET, ROLE_KNOWN, ROLE_KNOWN]
-
-
-def test_fits_ignore_past_covariates(past):
-    torch.manual_seed(0)
-    known, other = torch.randn(2, 1, 1, 664)
-    other[..., 600:] = float("nan")
-    values = 2 * known + other + 0.1 * torch.randn(1, 1, 664)
-    values[..., 600:] = float("nan")
-    both = torch.cat([other, known], 1)
-    ids = torch.zeros(1, 1, dtype=torch.long)
-    rows, _, roles = covariate_rows(past.config, values, ids, both)
-    assert roles[0].tolist() == [ROLE_TARGET, ROLE_PAST, ROLE_KNOWN, ROLE_FIT]
-    alone = covariate_rows(past.config, values, ids, known)[0]
-    torch.testing.assert_close(rows[0, -1], alone[0, -1], equal_nan=True)
-    future = torch.arange(664) >= 600
-    fitted = xreg_fit(values, both, future)
-    assert fitted.any()
-    torch.testing.assert_close(fitted, xreg_fit(values, known, future))
-    assert not xreg_fit(values, other, future).any()
-
-
-def test_a_known_column_that_runs_out_is_a_past_row_in_later_passes(past, cases, roles):
-    history = torch.from_numpy(cases["cov_history"])[3:]
-    covs = torch.from_numpy(cases["long_covariates"])[3:, :1].clone()
-    covs[..., -70:] = float("nan")  # ten future values: none from the second pass's origin on
-    q = past.forecast(history, 80, covariates=covs, views=False)
-    assert torch.isfinite(q).all()
-    assert [int(used[0, 1]) for used in roles] == [ROLE_KNOWN, ROLE_PAST]
-
-
-def test_backtest_does_not_read_a_past_covariate_after_its_origin(past, cases, monkeypatch):
-    module = sys.modules["simons.forecast"]
-    calls, variants = [], module.covariate_variants
-
-    def recorded(model, history, horizon, ids, covariates, rows, *rest):
-        out = variants(model, history, horizon, ids, covariates, rows, *rest)
-        calls.append((covariates[1:], out[rows >= 1]))  # the backtest's covariates and forecasts
-        return out
-
-    monkeypatch.setattr(module, "covariate_variants", recorded)
-    history = torch.from_numpy(cases["cov_history"])[1:2]  # 250 observed steps: guarded
-    covs = torch.from_numpy(cases["cov_covariates"])[1:2, [0, 3]]  # a known-future and a past one
-    poisoned = covs.clone()
-    poisoned[0, 1, -32:-16] += 100.0  # the past covariate over the backtest's held-out block
-    q = [past.forecast(history, 16, covariates=c) for c in (covs, poisoned)]
-    (inputs, held), (other_inputs, other_held) = calls
-    assert len(held) == 2 and not torch.allclose(q[0], q[1], rtol=1e-3, atol=1e-3)
-    torch.testing.assert_close(inputs, other_inputs, rtol=0, atol=0, equal_nan=True)
-    torch.testing.assert_close(held, other_held, rtol=1e-5, atol=1e-5)
-
-
-def test_mixed_batch_matches_each_item_alone(past, cases):
-    history = torch.from_numpy(cases["cov_history"])  # 80, 250, 400 and 900 observed steps
-    covs = torch.from_numpy(cases["cov_covariates"])  # three known-future columns, then a past one
-    items = [covs[0, 3:], covs[1, 2:], covs[2, :2], None]  # past, both, known, none
-    together = past.forecast(history, 16, covariates=items)
-    for i, item in enumerate(items):
-        alone = past.forecast(history[i : i + 1], 16, covariates=[item])
-        torch.testing.assert_close(together[i : i + 1], alone, rtol=1e-5, atol=1e-5)
-
-
-@pytest.mark.parametrize("items", [4, 3])  # with far tokens; short histories, their prefix skipped
-def test_crops_and_skips_are_exact_with_past_rows(past, cases, roles, monkeypatch, items):
-    import simons.model as model_module
-
-    history = torch.from_numpy(cases["cov_history"])[:items].clone()
-    length = history.shape[-1]
-    covs = torch.cat([torch.from_numpy(cases["long_covariates"])[:, :1],
-                      F.pad(torch.from_numpy(cases["cov_covariates"])[:, 3:, :length], (0, 80),
-                            value=float("nan"))], 1)[:items]  # a known-future and a past column
-    history[1, :, : length - 120] = float("nan")  # a target starting after its past covariate
-    covs[2, 0] = float("nan")
-    covs[2, 1, : length - 100] = float("nan")  # a past covariate starting after its target
-    crops, skips = [], []
-    row_crops, skip = model_module.row_crops, Simons._skip
-    monkeypatch.setattr(model_module, "row_crops",
-                        lambda *a: crops.append(row_crops(*a)) or crops[-1])
-    monkeypatch.setattr(Simons, "_skip", lambda *a: skips.append(skip(*a)) or skips[-1])
-    fast = past.forecast(history, 80, covariates=covs)
-    assert any(len(c.unique()) > 1 for c in crops)
-    assert any((used == ROLE_PAST).any() for used in roles)
-    assert items == 4 or all(skips)
-    monkeypatch.setattr(model_module, "row_crops", lambda start, *_: torch.zeros(
-        start.shape[0], dtype=torch.long, device=start.device))
-    monkeypatch.setattr(model_module, "shared_rows", lambda *_: (None, None))
-    monkeypatch.setattr(Simons, "_skip", lambda *_: 0)
-    full = past.forecast(history, 80, covariates=covs)
-    torch.testing.assert_close(fast, full, rtol=1e-5, atol=1e-5)
-
-
-def test_from_pretrained_can_switch_past_rows_on():
-    assert not Simons.from_pretrained(FIXTURE).config.past_rows
-    assert Simons.from_pretrained(FIXTURE, past_rows=True).config.past_rows
-
 
 
 @pytest.fixture(scope="module")
