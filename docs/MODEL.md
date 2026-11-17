@@ -53,11 +53,9 @@ to turn off these views.
 
 With covariates, a series with at most one nonzero observed value gets no square-root views.
 Once normalized, `[0, ..., 0, v]` and `[0, ..., 0, √v]` look the same to the model, so squaring
-the square-root forecast back squares its relative growth. Load the model with
-`root_guard=False` to restore the square-root views of v0.1.1:
-`Simons.from_pretrained("abel-lab/Simons-297M", root_guard=False)`. The benchmark scores above
-use the v0.1.1 views; [`fev_bench.py`](../benchmarks/fev_bench.py) takes `root_guard=False` to
-reproduce them. Forecasts without covariates are unchanged.
+the square-root forecast back squares its relative growth. Forecasts without covariates are
+unchanged. Scores reported before this change, including those above, used v0.1.1; install that
+version to reproduce them.
 
 See [Getting started](GETTING_STARTED.md) for the input format,
 [covariates](GETTING_STARTED.md#covariates) and [fine-tuning](GETTING_STARTED.md#fine-tune), the

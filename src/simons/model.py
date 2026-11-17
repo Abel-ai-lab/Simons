@@ -419,11 +419,10 @@ class Simons(nn.Module):
 
     @classmethod
     def from_pretrained(cls, name_or_path, device="cpu", revision=None,
-                        past_rows: bool = False, root_guard: bool | None = None) -> "Simons":
+                        past_rows: bool = False) -> "Simons":
         """Load config.json and model.safetensors from a local folder or Hub repo, in eval mode.
         `revision` selects a Hub branch, tag or commit; `device` sets the model device.
-        `past_rows` (experimental) makes the model read past-only covariates as rows.
-        `root_guard`, if given, overrides the config's (False: the released square-root views)."""
+        `past_rows` (experimental) makes the model read past-only covariates as rows."""
         from safetensors.torch import load_file
 
         path = Path(name_or_path).expanduser()
@@ -438,8 +437,6 @@ class Simons(nn.Module):
         config = SimonsConfig.from_json(path / "config.json")
         if past_rows:
             config = dataclasses.replace(config, past_rows=True)
-        if root_guard is not None:
-            config = dataclasses.replace(config, root_guard=bool(root_guard))
         model = cls(config)
         model.load_state_dict(load_file(path / "model.safetensors"))
         return model.to(device).eval()

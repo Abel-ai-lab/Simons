@@ -27,10 +27,6 @@ class SimonsConfig:
     detector_mid: int = 7680  # series observed only within this many steps use a detector over them
     # Test-time rules (forecast only; they change no weights)
     views: bool = True  # median of native, sign-flipped and square-root views; pooled tail
-    # With covariates, a row with at most one nonzero observed value gets no square-root views:
-    # normalized, [0,...,0,v] and [0,...,0,sqrt(v)] look the same, so squaring back would square
-    # the forecast growth. False restores the released forecasts (Simons v0.1.1).
-    root_guard: bool = True
     # Quantile paths rolled out past prediction_length: fixed to the 0.2, 0.5 and 0.8 paths.
     tail_paths: tuple[int, ...] = (1, 4, 7)
     sign_clip: bool = True  # clip forecasts to the sign of a one-signed history
