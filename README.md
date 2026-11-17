@@ -1,13 +1,26 @@
 # Simons
 
-[![Papers with Code: GIFT-Eval](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49305&live=1)](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49305)
-[![Papers with Code: fev-bench](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49311&live=1)](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49311)
-[![Papers with Code: TIME](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49306&live=1)](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49306)
+<table>
+  <tr>
+    <td><b>Package</b></td>
+    <td><a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&amp;logoColor=white" alt="Python 3.10+"></a> <a href="https://github.com/Abel-ai-lab/Simons/releases"><img src="https://img.shields.io/github/v/release/Abel-ai-lab/Simons?label=release&amp;color=orange" alt="Release"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/code-Apache--2.0-blue" alt="Code: Apache-2.0"></a></td>
+  </tr>
+  <tr>
+    <td><b>Weights and Data</b></td>
+    <td><a href="https://huggingface.co/collections/abel-lab/simons-1-6ae3d4ce9705938e293c52dd"><img src="https://img.shields.io/badge/Hugging%20Face-Simons%201-FFD21E?logo=huggingface&amp;logoColor=FFD21E" alt="Hugging Face: Simons 1"></a> <a href="https://huggingface.co/datasets/abel-lab/Simons-Pretrain"><img src="https://img.shields.io/badge/data-Simons--Pretrain-FFD21E?logo=huggingface&amp;logoColor=FFD21E" alt="Data: Simons-Pretrain"></a> <a href="https://huggingface.co/abel-lab/Simons-297M/blob/main/LICENSE"><img src="https://img.shields.io/badge/weights-OpenMDW--1.1-blue" alt="Weights: OpenMDW-1.1"></a></td>
+  </tr>
+  <tr>
+    <td><b>Benchmarks</b></td>
+    <td><a href="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49305"><img src="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49305&amp;live=1" alt="Papers with Code: GIFT-Eval"></a> <a href="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49311"><img src="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49311&amp;live=1" alt="Papers with Code: fev-bench"></a> <a href="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49306"><img src="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49306&amp;live=1" alt="Papers with Code: TIME"></a></td>
+  </tr>
+  <tr>
+    <td><b>Read more</b></td>
+    <td><a href="https://abel.ai/research/introducing-simons/"><img src="https://img.shields.io/badge/Abel%20AI%20Lab-Release%20Blog-0A66C2" alt="Release Blog"></a> <a href="https://github.com/Abel-ai-lab/nanoTSFM"><img src="https://img.shields.io/badge/built%20from-nanoTSFM-24292F?logo=github" alt="Built from nanoTSFM"></a></td>
+  </tr>
+</table>
 
-**Simons** is a family of four open time series foundation models developed by Abel AI Lab for zero-shot probabilistic forecasting. Starting from a 3.3M-parameter [baseline](https://github.com/Abel-ai-lab/nanoTSFM), we developed the models in just 15 days, achieving state-of-the-art (SOTA) performance on several benchmark datasets.
+**Simons** is a family of four open time series foundation models developed by Abel AI Lab for zero-shot probabilistic forecasting. Starting from a 3.3M-parameter [baseline](https://github.com/Abel-ai-lab/nanoTSFM), we developed the models in just 15 days, achieving SOTA performance on several benchmark datasets.
 
-- 📝 [Introducing Simons](https://abel.ai/research/introducing-simons/): the release post
-- 🤗 [Simons 1 on Hugging Face](https://huggingface.co/collections/abel-lab/simons-1-6ae3d4ce9705938e293c52dd): the models, the training data, and the demo
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/benchmark-places-dark.png">
@@ -74,18 +87,15 @@ bash scripts/train.sh 25m data/example/train data/example/covariates
 
 ## Learn More
 
-| | |
-|---|---|
-| [Introducing Simons](https://abel.ai/research/introducing-simons/) | The release post: what Simons is and how it performs |
-| [Getting started](docs/GETTING_STARTED.md) | Input formats, covariates, forecasting options, and fine-tuning |
-| [Models](docs/MODEL.md) | The four model sizes, scores, and benchmark runs |
-| [Training](docs/TRAINING.md) | Training stages, configurations, GPU and memory settings, and corpus formats |
-| [Training data](docs/DATA.md) | Training data, including the public [Simons-Pretrain](https://huggingface.co/datasets/abel-lab/Simons-Pretrain) dataset |
-| [examples/demo.ipynb](examples/demo.ipynb) | End-to-end forecasting on a CPU |
-| [examples/finetune.ipynb](examples/finetune.ipynb) | Fine-tuning a released model on your data |
-| [Forecast Explorer](https://huggingface.co/spaces/abel-lab/simons-forecast-explorer) | Explore forecasts from all four models in your browser |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Tests, code style, and pull requests |
-| [CHANGELOG.md](CHANGELOG.md) | Changes in each release |
+- [Getting started](docs/GETTING_STARTED.md): input formats, covariates, forecasting options, and fine-tuning
+- [Models](docs/MODEL.md): the four sizes, their scores, and the benchmark runs
+- [Training](docs/TRAINING.md)
+- [Training data](docs/DATA.md)
+- [examples/demo.ipynb](examples/demo.ipynb): end-to-end forecasting on a CPU
+- [examples/finetune.ipynb](examples/finetune.ipynb)
+- [Forecast Explorer](https://huggingface.co/spaces/abel-lab/simons-forecast-explorer): forecasts from all four models in your browser
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CHANGELOG.md](CHANGELOG.md)
 
 ## Citation
 
