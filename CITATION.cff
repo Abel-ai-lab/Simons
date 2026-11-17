@@ -4,8 +4,8 @@ title: "Simons: Building Open Time Series Foundation Models through Auto-Researc
 type: software
 authors:
   - name: "Abel AI Lab"
-version: "0.1.1"
-date-released: "2026-11-11"
+version: "0.1.2"
+date-released: "2026-11-16"
 license: Apache-2.0
 url: "https://github.com/Abel-ai-lab/Simons"
 repository-code: "https://github.com/Abel-ai-lab/Simons"
