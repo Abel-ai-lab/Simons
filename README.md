@@ -4,9 +4,12 @@
 [![Release post](https://img.shields.io/badge/Abel%20AI%20Lab-Release%20post-0A66C2)](https://abel.ai/research/introducing-simons/)
 [![Built from nanoTSFM](https://img.shields.io/badge/built%20from-nanoTSFM-24292F?logo=github)](https://github.com/Abel-ai-lab/nanoTSFM)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)](pyproject.toml)
-[![PyTorch 2.5+](https://img.shields.io/badge/PyTorch-2.5%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Code: Apache-2.0](https://img.shields.io/badge/code-Apache--2.0-blue)](LICENSE)
 [![Weights: OpenMDW-1.1](https://img.shields.io/badge/weights-OpenMDW--1.1-blue)](https://huggingface.co/abel-lab/Simons-297M/blob/main/LICENSE)
+
+[![Papers with Code: GIFT-Eval](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49305&live=1)](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49305)
+[![Papers with Code: fev-bench](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49311&live=1)](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49311)
+[![Papers with Code: TIME](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49306&live=1)](https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49306)
 
 **Simons** is a family of four open time series foundation models developed by Abel AI Lab for zero-shot probabilistic forecasting. Starting from a 3.3M-parameter [baseline](https://github.com/Abel-ai-lab/nanoTSFM), we developed the models in just 15 days, achieving state-of-the-art (SOTA) performance on several benchmark datasets.
 
