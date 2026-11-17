@@ -6,6 +6,8 @@ All notable changes to Simons are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-16
+
 ### Changed
 
 - With covariates, a series with at most one nonzero observed value no longer gets the
@@ -56,6 +58,7 @@ All notable changes to Simons are recorded here. The format follows
 Initial release: inference and training code, the training recipe, and the weights of
 Simons-25M, Simons-60M, Simons-178M and Simons-297M.
 
-[Unreleased]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Abel-ai-lab/Simons/releases/tag/v0.1.0
