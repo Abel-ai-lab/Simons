@@ -86,6 +86,7 @@ bash scripts/train.sh 25m data/example/train data/example/covariates
 | [examples/finetune.ipynb](examples/finetune.ipynb) | Fine-tuning a released model on your data |
 | [Forecast Explorer](https://huggingface.co/spaces/abel-lab/simons-forecast-explorer) | Explore forecasts from all four models in your browser |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Tests, code style, and pull requests |
+| [CHANGELOG.md](CHANGELOG.md) | Changes in each release |
 
 ## Citation
 
