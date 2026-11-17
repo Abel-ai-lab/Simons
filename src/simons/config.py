@@ -35,7 +35,7 @@ class SimonsConfig:
     covariates: bool = False  # covariate rows: covariates join the target's variate group
     binary_rows: bool = False  # two-level known-future covariates enter unscaled in [0, 1]
     fit_row: bool = True  # single-target rows: add the in-context ridge fit as one more row
-    past_rows: bool = False  # past-only covariates join as rows (released models ignore them)
+    past_rows: bool = False  # always False: past-only covariates are ignored
     read_after: int = -1  # >= 0: target rows read the covariate rows after this time block
     read_binary: bool = True  # always True: the read also keys on two-level (indicator) rows
     xreg: bool = False  # forecast y - x'beta (in-context ridge) and add x'beta back
@@ -52,8 +52,9 @@ class SimonsConfig:
             raise ValueError("read_after must name a time block before the last")
         if self.xreg_guard and not self.xreg:
             raise ValueError("xreg_guard needs xreg")
-        if not self.read_binary or self.xreg_square:
-            raise ValueError("only read_binary: true and xreg_square: false are supported")
+        if self.past_rows or not self.read_binary or self.xreg_square:
+            raise ValueError("only past_rows: false, read_binary: true and xreg_square: false "
+                             "are supported")
         if self.rows_only_history < 0 or self.xreg_guard_min < 0:
             raise ValueError("rows_only_history and xreg_guard_min must be nonnegative")
         if self.context_length % self.patch_length or self.width % self.heads:
