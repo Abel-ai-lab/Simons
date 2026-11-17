@@ -8,7 +8,8 @@ With this file at models/simons/model.py in a fev checkout:
 `model` selects a released model id. Targets are forecast jointly in groups of at most 32,
 using up to 16 known-future covariates. Categorical history and horizon are coded separately
 (`shared_categories=False`). The checkpoint's forecast rules are applied, and the median
-is the point forecast. CUDA uses bf16 for the trunk and fp32 for embedding, norm and head."""
+is the point forecast. CUDA uses bf16 for the trunk and fp32 for embedding, norm and head.
+`root_guard=False` restores the square-root views of v0.1.1, which the reported scores used."""
 
 from typing import ClassVar
 
@@ -24,11 +25,12 @@ class SimonsModel(fev.ForecastingModel):
     trained_on_datasets: ClassVar[list[str]] = []
 
     def __init__(self, model: str = "abel-lab/Simons-297M", device: str = "auto",
-                 batch_size: int = 256):
+                 batch_size: int = 256, root_guard: bool | None = None):
         super().__init__()
         self.model = model
         self.device = device
         self.batch_size = batch_size
+        self.root_guard = root_guard  # False: the released square-root views (v0.1.1 scores)
         self._simons = None
 
     def _fit_predict(self, task: fev.Task) -> list[dict[str, list[dict]]]:
@@ -42,7 +44,8 @@ class SimonsModel(fev.ForecastingModel):
             device = self.device
             if device == "auto":
                 device = "cuda" if torch.cuda.is_available() else "cpu"
-            self._simons = Simons.from_pretrained(self.model, device=device)
+            self._simons = Simons.from_pretrained(self.model, device=device,
+                                                  root_guard=self.root_guard)
         predictions_per_window = []
         for window in task.iter_windows():
             past_data, future_data = window.get_input_data()

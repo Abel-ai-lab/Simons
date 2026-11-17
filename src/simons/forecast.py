@@ -168,6 +168,10 @@ def views_forecast(model, x: torch.Tensor, horizon: int, series_ids: torch.Tenso
     first = min(horizon, pred)
     observed = torch.isfinite(x)
     nonneg = observed.any(-1) & torch.where(observed, x >= 0, True).all(-1)  # [B,V]
+    if c.root_guard and covariates is not None:
+        # A row with covariates and at most one nonzero value gets no square-root views.
+        given = torch.isfinite(covariates).flatten(1).any(-1)[:, None]  # [B,1]
+        nonneg = nonneg & ~(given & ((observed & (x != 0)).sum(-1) <= 1))
 
     def run(values, steps, ids=series_ids, cov=None):
         if cov is not None:

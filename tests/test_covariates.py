@@ -319,3 +319,68 @@ def test_crops_and_skips_are_exact_with_past_rows(past, cases, roles, monkeypatc
 def test_from_pretrained_can_switch_past_rows_on():
     assert not Simons.from_pretrained(FIXTURE).config.past_rows
     assert Simons.from_pretrained(FIXTURE, past_rows=True).config.past_rows
+
+
+def _variant(tiny, **changes):
+    """The fixture checkpoint with config changes and the same weights."""
+    model = Simons(dataclasses.replace(tiny.config, **changes)).eval()
+    model.load_state_dict(tiny.state_dict())
+    return model
+
+
+@pytest.fixture
+def rollouts(monkeypatch):
+    """The values [B,V,T] of every rollout views_forecast makes."""
+    forecast_module = sys.modules["simons.forecast"]  # `simons.forecast` is also a function
+    seen, rollout = [], forecast_module.rollout
+
+    def recorded(model, history, *args, **kwargs):
+        seen.append(history.detach().clone())
+        return rollout(model, history, *args, **kwargs)
+
+    monkeypatch.setattr(forecast_module, "rollout", recorded)
+    return seen
+
+
+def _one_sale(n=200, horizon=16):
+    """Zeros with one sale of 5, and a covariate flat over the history that rises after it."""
+    history = torch.zeros(1, n)
+    history[0, n - 30] = 5.0
+    covariate = torch.cat([torch.zeros(n), torch.arange(1.0, horizon + 1)])[None, None]
+    return history, covariate
+
+
+@pytest.mark.parametrize("horizon", [16, 80])  # one pass, and the first block of a longer one
+@pytest.mark.parametrize("guard", [True, False])
+def test_root_guard_skips_square_root_views_of_one_value(tiny, rollouts, guard, horizon):
+    model = _variant(tiny, xreg=False, xreg_guard=False, root_guard=guard)
+    history, covariate = _one_sale(horizon=horizon)
+    q = model.forecast(history, horizon, covariates=covariate)
+    assert torch.isfinite(q).all()
+    root = torch.tensor(5.0).sqrt()
+    took_root = any(torch.isclose(v, root).any() for v in rollouts)
+    assert took_root != guard
+    assert any(torch.isclose(v, torch.tensor(5.0)).any() for v in rollouts)
+
+
+@pytest.mark.parametrize("horizon", [16, 80])
+def test_root_guard_leaves_other_series_unchanged(tiny, cases, horizon):
+    on, off = _variant(tiny, root_guard=True), _variant(tiny, root_guard=False)
+    history, covariate = _one_sale(horizon=horizon)
+    two = history.clone()
+    two[0, 100] = 2.0  # two nonzero values: square-root views are kept
+    for model in (on, off):
+        assert model.config.xreg
+    assert torch.equal(on.forecast(two, horizon, covariates=covariate),
+                       off.forecast(two, horizon, covariates=covariate))
+    assert torch.equal(on.forecast(history, horizon), off.forecast(history, horizon))
+    real = torch.from_numpy(cases["cov_history"])
+    covs = list(cases["cov_covariates"]) if horizon == 16 else torch.from_numpy(
+        cases["long_covariates"])
+    assert torch.equal(on.forecast(real, horizon, covariates=covs),
+                       off.forecast(real, horizon, covariates=covs))
+
+
+def test_from_pretrained_can_switch_root_guard_off():
+    assert Simons.from_pretrained(FIXTURE).config.root_guard
+    assert not Simons.from_pretrained(FIXTURE, root_guard=False).config.root_guard
