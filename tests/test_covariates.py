@@ -1,5 +1,6 @@
 
 import dataclasses
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -157,3 +158,48 @@ def test_row_crop_and_shared_rows_are_exact(tiny, cases, monkeypatch):
     monkeypatch.setattr(model_module, "shared_rows", lambda *_: (None, None))
     full = tiny.forecast(history, 16, covariates=covs)
     torch.testing.assert_close(fast, full, rtol=1e-5, atol=1e-5, equal_nan=True)
+
+
+@pytest.fixture(scope="module")
+def no_xreg(tiny):
+    """The fixture checkpoint without XReg: views_forecast sees the history itself."""
+    model = Simons(dataclasses.replace(tiny.config, xreg=False, xreg_guard=False)).eval()
+    model.load_state_dict(tiny.state_dict())
+    return model
+
+
+@pytest.fixture
+def rollouts(monkeypatch):
+    """The values [B,V,T] of every rollout views_forecast makes."""
+    forecast_module = sys.modules["simons.forecast"]  # `simons.forecast` is also a function
+    seen, rollout = [], forecast_module.rollout
+
+    def recorded(model, history, *args, **kwargs):
+        seen.append(history.detach().clone())
+        return rollout(model, history, *args, **kwargs)
+
+    monkeypatch.setattr(forecast_module, "rollout", recorded)
+    return seen
+
+
+def _square_root_views(rollouts):
+    """Whether a rollout read the square root of the sale of 5."""
+    return any(torch.isclose(v, torch.tensor(5.0).sqrt()).any() for v in rollouts)
+
+
+@pytest.mark.parametrize("horizon", [16, 80])  # one pass, and the first block of a longer one
+@pytest.mark.parametrize("second", [False, True])
+@pytest.mark.parametrize("with_covariate", [True, False])
+def test_square_root_views_skip_one_value_with_covariates(no_xreg, rollouts, horizon, second,
+                                                          with_covariate):
+    """Zeros with one sale, and a covariate flat over the history that rises after it."""
+    n = 200
+    history = torch.zeros(1, n)
+    history[0, n - 30] = 5.0
+    if second:
+        history[0, 100] = 2.0
+    covariate = torch.cat([torch.zeros(n), torch.arange(1.0, horizon + 1)])[None, None]
+    q = no_xreg.forecast(history, horizon, covariates=covariate if with_covariate else None)
+    assert torch.isfinite(q).all()
+    assert any(torch.isclose(v, torch.tensor(5.0)).any() for v in rollouts)
+    assert _square_root_views(rollouts) == (second or not with_covariate)
