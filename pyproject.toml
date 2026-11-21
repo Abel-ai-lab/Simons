@@ -1,7 +1,7 @@
 [project]
 name = "simons"
 version = "0.1.2"
-description = "Simons: small, open time series foundation models for probabilistic forecasting"
+description = "Simons: Building Open Time Series Foundation Models through Auto-Research"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
