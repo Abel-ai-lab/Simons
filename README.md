@@ -88,7 +88,7 @@ bash scripts/train.sh 25m data/example/train data/example/covariates
 ## Learn More
 
 - [Getting started](docs/GETTING_STARTED.md): input formats, covariates, forecasting options, and fine-tuning
-- [Models](docs/MODEL.md): the four sizes, their scores, and the benchmark runs
+- [Models](docs/MODEL.md): the four sizes, their scores, CPU memory and time, and the benchmark runs
 - [Training](docs/TRAINING.md)
 - [Training data](docs/DATA.md)
 - [examples/demo.ipynb](examples/demo.ipynb): end-to-end forecasting on a CPU

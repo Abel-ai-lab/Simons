@@ -9,8 +9,16 @@ LOCAL = 16
 MAX_LOCAL = 128
 EULER = 0.5772156649
 TABLE_BLOCK = 256
+TABLE_SPAN = 8192  # longer spans have large tables: 1 GiB for 16,384 steps, 4 GiB for 32,768
+PEAK_COLUMNS = 512
 
 _TABLES = {}
+
+
+def _waves(steps: torch.Tensor, periods: torch.Tensor):
+    """cos and sin [L,P] float32 of float32 `periods` [P] at float64 `steps` [L]."""
+    angle = 2 * math.pi * torch.remainder(steps[:, None] / periods.double()[None], 1.0)
+    return angle.cos().float(), angle.sin().float()
 
 
 def _refine_table(length: int, device):
@@ -24,12 +32,35 @@ def _refine_table(length: int, device):
             sin = torch.empty_like(cos)
             # Blockwise fp64 angles avoid allocating a full fp64 DFT table.
             for start in range(0, candidates.numel(), TABLE_BLOCK):
-                block = candidates[start : start + TABLE_BLOCK].double()
-                angle = 2 * math.pi * torch.remainder(steps[:, None] / block[None], 1.0)
-                cos[:, start : start + TABLE_BLOCK] = angle.cos()
-                sin[:, start : start + TABLE_BLOCK] = angle.sin()
+                block = slice(start, start + TABLE_BLOCK)
+                cos[:, block], sin[:, block] = _waves(steps, candidates[block])
             _TABLES[key] = (candidates, cos, sin)
     return _TABLES[key]
+
+
+def _power(z: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.Tensor:
+    """Squared projections [N,P] of z [N,L] on the cos and sin waves [L,P]."""
+    if not z.is_cuda:
+        return (z @ cos) ** 2 + (z @ sin) ** 2
+    # TF32 only changes the argmax among near-tied neighboring integer periods.
+    previous = torch.backends.cuda.matmul.allow_tf32
+    torch.backends.cuda.matmul.allow_tf32 = True
+    try:
+        return (z @ cos) ** 2 + (z @ sin) ** 2
+    finally:
+        torch.backends.cuda.matmul.allow_tf32 = previous
+
+
+def _peak_power(z: torch.Tensor, candidates: torch.Tensor, wanted: torch.Tensor) -> torch.Tensor:
+    """`_power` [N,P] of z [N,L] for the `wanted` [P] candidate periods, -1 elsewhere, from waves
+    built here instead of the table."""
+    steps = torch.arange(z.shape[-1], device=z.device, dtype=torch.float64)
+    out = z.new_full((z.shape[0], candidates.numel()), -1.0)
+    index = torch.nonzero(wanted)[:, 0]
+    for start in range(0, index.numel(), TABLE_BLOCK):
+        block = index[start : start + TABLE_BLOCK]
+        out[:, block] = _power(z, *_waves(steps, candidates[block]))
+    return out
 
 
 def detect_periods(values: torch.Tensor, context: int, slots: int, alpha: float, local: float,
@@ -85,20 +116,20 @@ def detect_periods(values: torch.Tensor, context: int, slots: int, alpha: float,
         peak &= intensity > local * background
         score = torch.where(peak, intensity, torch.zeros_like(intensity))
         top, index = score.topk(min(3 * slots, half), dim=-1)
-        candidates, cos, sin = _refine_table(context, x.device)
-        if z.is_cuda:
-            # TF32 only changes the argmax among near-tied neighboring integer periods.
-            previous = torch.backends.cuda.matmul.allow_tf32
-            torch.backends.cuda.matmul.allow_tf32 = True
-            try:
-                exact = (z @ cos) ** 2 + (z @ sin) ** 2
-            finally:
-                torch.backends.cuda.matmul.allow_tf32 = previous
-        else:
-            exact = (z @ cos) ** 2 + (z @ sin) ** 2
+        candidates = torch.arange(2, half + 1, device=x.device, dtype=torch.float32)
         centre = (index.float() + 1)[..., None]
         offset = (context / candidates)[None, None] - centre
         near = offset.abs() < 1
+        # A kept period is a candidate next to a peak, or the fallback when no candidate is. On a
+        # CPU, a long span with few such candidates skips its table; the periods match the table's
+        # unless two neighboring candidates tie within float32 rounding.
+        wanted = None
+        if context > TABLE_SPAN and z.device.type == "cpu":
+            wanted = (near & (top > 0)[..., None]).flatten(0, 1).any(0)
+        if wanted is None or int(wanted.sum()) > PEAK_COLUMNS:
+            exact = _power(z, *_refine_table(context, x.device)[1:])
+        else:
+            exact = _peak_power(z, candidates, wanted)
         refined = torch.where(near, exact[:, None], torch.full_like(offset, -1)).argmax(-1)
         periods = candidates[refined]
         keep = top > 0

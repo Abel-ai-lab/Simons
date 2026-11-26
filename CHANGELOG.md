@@ -6,6 +6,19 @@ All notable changes to Simons are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- On a CPU, period detection builds no lookup table for a context of 16,384 or 32,768 steps when
+  few candidate periods are needed, as with covariates on a history of a few thousand steps. The
+  table takes 1 GiB for Simons-25M and 60M and 4 GiB for Simons-178M and 297M. At 2 CPU threads,
+  Simons-297M with 16 covariates on a 2,688-step history peaks at 2.7 GiB instead of 6.6 GiB, and
+  without covariates on a 32,768-step history with daily and weekly cycles at 2.4 GiB instead of
+  5.8 GiB. Forecasts are unchanged. ([#24](https://github.com/Abel-ai-lab/Simons/pull/24))
+
+### Documentation
+
+- `docs/MODEL.md` gives the CPU memory and time of each size ([#24](https://github.com/Abel-ai-lab/Simons/pull/24)).
+
 ## [0.1.2] - 2026-11-16
 
 ### Changed
