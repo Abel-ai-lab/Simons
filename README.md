@@ -55,9 +55,9 @@ Simons is fully open source. In addition to the inference code and model weights
 Simons requires Python 3.10+ and PyTorch 2.5+. A GPU is optional for inference.
 
 ```shell
-pip install "git+https://github.com/Abel-ai-lab/Simons"
+pip install simons-forecasting
 # or with uv
-uv pip install "git+https://github.com/Abel-ai-lab/Simons"
+uv pip install simons-forecasting
 ```
 
 ## Forecast
@@ -80,7 +80,7 @@ quantiles = model.forecast(history, horizon=96, covariates=covariates)
 ## Train
 
 ```shell
-git clone https://github.com/Abel-ai-lab/Simons && cd Simons && pip install -e .
+git clone https://github.com/Abel-ai-lab/Simons && cd Simons && pip install -e ".[train]"
 python scripts/prepare_example_data.py --output data/example
 bash scripts/train.sh 25m data/example/train data/example/covariates
 ```

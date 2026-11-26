@@ -8,6 +8,10 @@ All notable changes to Simons are recorded here. The format follows
 
 ### Changed
 
+- Simons is on PyPI as `simons-forecasting`: `pip install simons-forecasting`. The import name stays
+  `simons`. The package installs only the inference dependencies (PyTorch, NumPy, safetensors and
+  huggingface_hub); training and fine-tuning need the `train` extra, `pip install -e ".[train]"` in a
+  clone.
 - On a CPU, period detection builds no lookup table for a context of 16,384 or 32,768 steps when
   few candidate periods are needed, as with covariates on a history of a few thousand steps. The
   table takes 1 GiB for Simons-25M and 60M and 4 GiB for Simons-178M and 297M. At 2 CPU threads,

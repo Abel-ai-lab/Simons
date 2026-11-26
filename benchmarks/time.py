@@ -1,7 +1,7 @@
 """Simons forecasts TIME tasks and saves predictions, metrics and config.
 
 With this file at experiments/simons_model.py in a TIME checkout:
-    pip install "simons @ git+https://github.com/Abel-ai-lab/Simons"
+    pip install simons-forecasting
     python experiments/simons_model.py --model abel-lab/Simons-297M --dataset all_datasets
 
 Tasks are loaded with to_univariate=False; related variates are forecast in groups of at most 32.

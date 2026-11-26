@@ -10,7 +10,7 @@ how to fine-tune a released model. Two notebooks run the same steps end to end:
 You need Python 3.10+ and PyTorch 2.5+. A GPU is optional for inference.
 
 ```shell
-pip install "git+https://github.com/Abel-ai-lab/Simons"
+pip install simons-forecasting
 ```
 
 Load a model by its Hugging Face name. This page uses Simons-25M, the smallest, throughout;
@@ -126,12 +126,12 @@ outputs = forecast_series(
 Fine-tuning trains a released model further on your own series. Hold out a test period and forecast
 it with the released model first.
 
-Fine-tuning needs a clone of the repository:
+Fine-tuning needs a clone of the repository and the training dependencies:
 
 ```shell
 git clone https://github.com/Abel-ai-lab/Simons
 cd Simons
-pip install -e .
+pip install -e ".[train]"
 ```
 
 The configs target GPUs with 80 GB of memory: one for Simons-25M and 60M, two for Simons-178M and
