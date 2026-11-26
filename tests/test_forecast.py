@@ -141,3 +141,35 @@ def test_period_tables_match_the_direct_formula():
     assert cos.dtype == sin.dtype == torch.float32
     assert torch.equal(cos, angle.cos().float())
     assert torch.equal(sin, angle.sin().float())
+
+
+def test_periods_without_a_table_match_the_table(monkeypatch):
+    torch.manual_seed(0)
+    length = 1200
+    steps = torch.arange(length)
+    values = torch.randn(5, length)  # the last row stays noise: no period
+    for row, periods in enumerate(((7,), (24, 168), (50.3, 333), (400,))):
+        for period in periods:
+            values[row] += 3 * torch.sin(2 * math.pi * steps / period)
+    values[1, :300] = float("nan")
+    values[2, ::7] = float("nan")
+    table = periodicity.detect_periods(values, length, 4, 0.05, 5.0, 32)
+    assert (table[:4, 0] > 0).all() and (table[1:3, 1] > 0).all() and not table[4].any()
+    monkeypatch.setattr(periodicity, "TABLE_SPAN", 0)  # every span may skip its table
+    monkeypatch.setattr(periodicity, "PEAK_COLUMNS", length)  # however many candidates it needs
+    monkeypatch.setattr(periodicity, "TABLE_BLOCK", 64)  # in several blocks
+    monkeypatch.setattr(periodicity, "_refine_table", None)
+    assert torch.equal(periodicity.detect_periods(values, length, 4, 0.05, 5.0, 32), table)
+
+
+def test_peak_power_matches_the_table_columns(monkeypatch):
+    torch.manual_seed(0)
+    length = 1200
+    candidates, cos, sin = periodicity._refine_table(length, torch.device("cpu"))
+    z = torch.randn(3, length)
+    wanted = torch.rand(candidates.numel()) < 0.3
+    monkeypatch.setattr(periodicity, "TABLE_BLOCK", 64)  # several blocks, the last one partial
+    power = periodicity._peak_power(z, candidates, wanted)
+    assert (power[:, ~wanted] == -1).all()
+    full = (z @ cos) ** 2 + (z @ sin) ** 2  # several rows: rounding differs from a column subset
+    torch.testing.assert_close(power[:, wanted], full[:, wanted], rtol=1e-4, atol=1e-2)
