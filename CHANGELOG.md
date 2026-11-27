@@ -6,6 +6,8 @@ All notable changes to Simons are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-26
+
 ### Changed
 
 - Simons is on PyPI as `simons-forecasting`: `pip install simons-forecasting`. The import name stays
@@ -75,7 +77,8 @@ All notable changes to Simons are recorded here. The format follows
 Initial release: inference and training code, the training recipe, and the weights of
 Simons-25M, Simons-60M, Simons-178M and Simons-297M.
 
-[Unreleased]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Abel-ai-lab/Simons/releases/tag/v0.1.0
