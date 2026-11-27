@@ -6,6 +6,13 @@ All notable changes to Simons are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.1.3.post1] - 2026-11-26
+
+### Documentation
+
+- The README uses absolute image and link addresses, so the PyPI page shows its figures and
+  links ([#27](https://github.com/Abel-ai-lab/Simons/pull/27)). The code is the same as 0.1.3.
+
 ## [0.1.3] - 2026-11-26
 
 ### Changed
@@ -77,7 +84,8 @@ All notable changes to Simons are recorded here. The format follows
 Initial release: inference and training code, the training recipe, and the weights of
 Simons-25M, Simons-60M, Simons-178M and Simons-297M.
 
-[Unreleased]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.3.post1...HEAD
+[0.1.3.post1]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.3...v0.1.3.post1
 [0.1.3]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.0...v0.1.1

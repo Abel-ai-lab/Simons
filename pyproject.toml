@@ -1,6 +1,6 @@
 [project]
 name = "simons-forecasting"
-version = "0.1.3"
+version = "0.1.3.post1"
 description = "Simons: Building Open Time Series Foundation Models through Auto-Research"
 readme = "README.md"
 license = "Apache-2.0"
