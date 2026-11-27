@@ -3,7 +3,7 @@
 <table>
   <tr>
     <td><b>Package</b></td>
-    <td><a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&amp;logoColor=white" alt="Python 3.10+"></a> <a href="https://github.com/Abel-ai-lab/Simons/releases"><img src="https://img.shields.io/github/v/release/Abel-ai-lab/Simons?label=release&amp;color=orange" alt="Release"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/code-Apache--2.0-blue" alt="Code: Apache-2.0"></a></td>
+    <td><a href="https://pypi.org/project/simons-forecasting/"><img src="https://img.shields.io/pypi/v/simons-forecasting?label=PyPI&amp;color=3775A9&amp;logo=pypi&amp;logoColor=white" alt="PyPI: simons-forecasting"></a> <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&amp;logoColor=white" alt="Python 3.10+"></a> <a href="https://github.com/Abel-ai-lab/Simons/releases"><img src="https://img.shields.io/github/v/release/Abel-ai-lab/Simons?label=release&amp;color=orange" alt="Release"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/code-Apache--2.0-blue" alt="Code: Apache-2.0"></a></td>
   </tr>
   <tr>
     <td><b>Weights and Data</b></td>
@@ -12,6 +12,10 @@
   <tr>
     <td><b>Benchmarks</b></td>
     <td><a href="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49305"><img src="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49305&amp;live=1" alt="Papers with Code: GIFT-Eval"></a> <a href="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49311"><img src="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49311&amp;live=1" alt="Papers with Code: fev-bench"></a> <a href="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge-link?eval=49306"><img src="https://paperswithcode.co/api/v1/papers/133409/leaderboard-badge.svg?eval=49306&amp;live=1" alt="Papers with Code: TIME"></a></td>
+  </tr>
+  <tr>
+    <td><b>Integrations</b></td>
+    <td><a href="https://github.com/TimeCopilot/foundationforecast"><img src="https://img.shields.io/badge/TimeCopilot-FoundationForecast-5B4BC4" alt="TimeCopilot: FoundationForecast"></a> <a href="docs/GETTING_STARTED.md#options"><img src="https://img.shields.io/badge/GluonTS-SimonsPredictor-2F6F9F" alt="GluonTS: SimonsPredictor"></a></td>
   </tr>
   <tr>
     <td><b>Read more</b></td>
@@ -55,9 +59,9 @@ Simons is fully open source. In addition to the inference code and model weights
 Simons requires Python 3.10+ and PyTorch 2.5+. A GPU is optional for inference.
 
 ```shell
-pip install "git+https://github.com/Abel-ai-lab/Simons"
+pip install simons-forecasting
 # or with uv
-uv pip install "git+https://github.com/Abel-ai-lab/Simons"
+uv pip install simons-forecasting
 ```
 
 ## Forecast
@@ -77,10 +81,17 @@ covariates = torch.randn(8, 2, 2000 + 96)
 quantiles = model.forecast(history, horizon=96, covariates=covariates)
 ```
 
+## Integrations
+
+| Library | Use |
+|---|---|
+| [FoundationForecast](https://github.com/TimeCopilot/foundationforecast) (TimeCopilot) | `from foundationforecast.models import Simons` |
+| [GluonTS](https://github.com/awslabs/gluonts) | `from simons.predictor import SimonsPredictor` |
+
 ## Train
 
 ```shell
-git clone https://github.com/Abel-ai-lab/Simons && cd Simons && pip install -e .
+git clone https://github.com/Abel-ai-lab/Simons && cd Simons && pip install -e ".[train]"
 python scripts/prepare_example_data.py --output data/example
 bash scripts/train.sh 25m data/example/train data/example/covariates
 ```

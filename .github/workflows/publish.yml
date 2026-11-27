@@ -1,0 +1,34 @@
+name: Publish
+
+# Publishes simons-forecasting to PyPI when a GitHub release is published. PyPI trusts this
+# workflow and environment (trusted publishing), so the repository stores no PyPI token.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  pypi:
+    if: github.repository == 'Abel-ai-lab/Simons'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+      - name: Check the tag matches the version
+        run: |
+          version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match version $version in pyproject.toml"
+            exit 1
+          fi
+      - name: Build
+        run: uv build
+      - name: Publish
+        run: uv publish --trusted-publishing always

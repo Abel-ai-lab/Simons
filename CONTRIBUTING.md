@@ -37,3 +37,12 @@ using generated data and `tests/fixtures`.
 Keep forecasts, training losses and weights identical. For changes that alter outputs, document
 the reason and measure the effect, such as benchmark scores before and after. Put new training
 features behind a config option whose default leaves the recipe unchanged.
+
+## Releasing
+
+1. Open a PR that sets the version in `pyproject.toml`, `src/simons/__init__.py` and
+   `CITATION.cff` (with `date-released`), and moves the `Unreleased` entries in `CHANGELOG.md`
+   under the new version. Merge it.
+2. Publish a GitHub release with the tag `v<version>` on that commit.
+3. Approve the `pypi` deployment in the Publish workflow run. It checks that the tag matches the
+   version, builds the package and uploads it to PyPI as `simons-forecasting`.

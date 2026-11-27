@@ -24,7 +24,7 @@ writes a 44 GB cache and needs more than 32 GB of system memory. Training Simons
 takes about 21 hours on one 96 GB GPU.
 
 ```shell
-pip install -e .
+pip install -e ".[train]"
 
 # A small public example corpus and an example covariate corpus:
 python scripts/prepare_example_data.py --output data/example

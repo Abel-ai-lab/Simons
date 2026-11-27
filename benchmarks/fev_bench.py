@@ -2,7 +2,7 @@
 This wrapper was run at fev commit `13b1913` with fev's `models/evaluate.py`.
 
 With this file at models/simons/model.py in a fev checkout:
-    echo 'simons @ git+https://github.com/Abel-ai-lab/Simons' > models/simons/requirements.txt
+    echo 'simons-forecasting' > models/simons/requirements.txt
     python models/evaluate.py -m simons -b benchmarks/fev_bench/tasks.yaml
 
 `model` selects a released model id. Targets are forecast jointly in groups of at most 32,
