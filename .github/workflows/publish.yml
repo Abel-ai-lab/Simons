@@ -30,8 +30,6 @@ jobs:
           fi
       - name: Build
         run: uv build
-      # PEP 740 attestations, signed with this workflow's identity; uv publish uploads them
-      # with the files, and PyPI shows the files' provenance.
       - name: Sign
         run: uvx pypi-attestations==0.0.31 sign dist/*.whl dist/*.tar.gz
       - name: Publish

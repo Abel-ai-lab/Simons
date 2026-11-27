@@ -59,13 +59,10 @@ Simons is fully open source. In addition to the inference code and model weights
 Simons requires Python 3.10+ and PyTorch 2.5+. A GPU is optional for inference.
 
 ```shell
-pip install simons-forecasting
-# or with uv
-uv pip install simons-forecasting
+pip install simons-forecasting           # inference
+pip install "simons-forecasting[train]"  # with training and fine-tuning
+uv pip install simons-forecasting        # or with uv
 ```
-
-Training and fine-tuning need the `train` extra: `pip install "simons-forecasting[train]"`, or
-`pip install -e ".[train]"` in a clone, which also has the recipes in `configs/`.
 
 ## Forecast
 
