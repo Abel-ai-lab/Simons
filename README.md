@@ -64,6 +64,9 @@ pip install simons-forecasting
 uv pip install simons-forecasting
 ```
 
+Training and fine-tuning need the `train` extra: `pip install "simons-forecasting[train]"`, or
+`pip install -e ".[train]"` in a clone, which also has the recipes in `configs/`.
+
 ## Forecast
 
 ```python
