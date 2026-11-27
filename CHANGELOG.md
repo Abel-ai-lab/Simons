@@ -6,12 +6,14 @@ All notable changes to Simons are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-26
+
 ### Changed
 
 - Simons is on PyPI as `simons-forecasting`: `pip install simons-forecasting`. The import name stays
   `simons`. The package installs only the inference dependencies (PyTorch, NumPy, safetensors and
   huggingface_hub); training and fine-tuning need the `train` extra, `pip install -e ".[train]"` in a
-  clone.
+  clone. ([#25](https://github.com/Abel-ai-lab/Simons/pull/25))
 - On a CPU, period detection builds no lookup table for a context of 16,384 or 32,768 steps when
   few candidate periods are needed, as with covariates on a history of a few thousand steps. The
   table takes 1 GiB for Simons-25M and 60M and 4 GiB for Simons-178M and 297M. At 2 CPU threads,
@@ -75,7 +77,8 @@ All notable changes to Simons are recorded here. The format follows
 Initial release: inference and training code, the training recipe, and the weights of
 Simons-25M, Simons-60M, Simons-178M and Simons-297M.
 
-[Unreleased]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Abel-ai-lab/Simons/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Abel-ai-lab/Simons/releases/tag/v0.1.0
