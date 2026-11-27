@@ -3,7 +3,7 @@
 <table>
   <tr>
     <td><b>Package</b></td>
-    <td><a href="https://pypi.org/project/simons-forecasting/"><img src="https://img.shields.io/pypi/v/simons-forecasting?label=PyPI&amp;color=3775A9&amp;logo=pypi&amp;logoColor=white" alt="PyPI: simons-forecasting"></a> <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&amp;logoColor=white" alt="Python 3.10+"></a> <a href="https://github.com/Abel-ai-lab/Simons/releases"><img src="https://img.shields.io/github/v/release/Abel-ai-lab/Simons?label=release&amp;color=orange" alt="Release"></a> <a href="LICENSE"><img src="https://img.shields.io/badge/code-Apache--2.0-blue" alt="Code: Apache-2.0"></a></td>
+    <td><a href="https://pypi.org/project/simons-forecasting/"><img src="https://img.shields.io/pypi/v/simons-forecasting?label=PyPI&amp;color=3775A9&amp;logo=pypi&amp;logoColor=white" alt="PyPI: simons-forecasting"></a> <a href="https://github.com/Abel-ai-lab/Simons/blob/main/pyproject.toml"><img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&amp;logoColor=white" alt="Python 3.10+"></a> <a href="https://github.com/Abel-ai-lab/Simons/releases"><img src="https://img.shields.io/github/v/release/Abel-ai-lab/Simons?label=release&amp;color=orange" alt="Release"></a> <a href="https://github.com/Abel-ai-lab/Simons/blob/main/LICENSE"><img src="https://img.shields.io/badge/code-Apache--2.0-blue" alt="Code: Apache-2.0"></a></td>
   </tr>
   <tr>
     <td><b>Weights and Data</b></td>
@@ -15,7 +15,7 @@
   </tr>
   <tr>
     <td><b>Integrations</b></td>
-    <td><a href="https://github.com/TimeCopilot/foundationforecast"><img src="https://img.shields.io/badge/TimeCopilot-FoundationForecast-5B4BC4" alt="TimeCopilot: FoundationForecast"></a> <a href="docs/GETTING_STARTED.md#options"><img src="https://img.shields.io/badge/GluonTS-SimonsPredictor-2F6F9F" alt="GluonTS: SimonsPredictor"></a></td>
+    <td><a href="https://github.com/TimeCopilot/foundationforecast"><img src="https://img.shields.io/badge/TimeCopilot-FoundationForecast-5B4BC4" alt="TimeCopilot: FoundationForecast"></a> <a href="https://github.com/Abel-ai-lab/Simons/blob/main/docs/GETTING_STARTED.md#options"><img src="https://img.shields.io/badge/GluonTS-SimonsPredictor-2F6F9F" alt="GluonTS: SimonsPredictor"></a></td>
   </tr>
   <tr>
     <td><b>Read more</b></td>
@@ -27,15 +27,15 @@
 
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/benchmark-places-dark.png">
-  <img src="docs/assets/benchmark-places.png" alt="Places on public benchmark leaderboards" width="720">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Abel-ai-lab/Simons/main/docs/assets/benchmark-places-dark.png">
+  <img src="https://raw.githubusercontent.com/Abel-ai-lab/Simons/main/docs/assets/benchmark-places.png" alt="Places on public benchmark leaderboards" width="720">
 </picture>
 
 Simons is also very fast. It can complete a GIFT-Eval benchmark run in just 14 minutes on a single A100 GPU.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/inference-time-dark.png">
-  <img src="docs/assets/inference-time.png" alt="Time to forecast GIFT-Eval, TIME and fev-bench" width="720">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Abel-ai-lab/Simons/main/docs/assets/inference-time-dark.png">
+  <img src="https://raw.githubusercontent.com/Abel-ai-lab/Simons/main/docs/assets/inference-time.png" alt="Time to forecast GIFT-Eval, TIME and fev-bench" width="720">
 </picture>
 
 ## Open Artifacts
@@ -49,9 +49,9 @@ Simons is fully open source. In addition to the inference code and model weights
 | Simons-178M | Model weights | [abel-lab/Simons-178M](https://huggingface.co/abel-lab/Simons-178M) |
 | Simons-297M | Model weights | [abel-lab/Simons-297M](https://huggingface.co/abel-lab/Simons-297M) |
 | Simons-Pretrain | Pretraining data | [abel-lab/Simons-Pretrain](https://huggingface.co/datasets/abel-lab/Simons-Pretrain) |
-| Code | Inference and training | [`src/simons`](src/simons) |
-| Training recipes | Configurations and scripts | [`configs/`](configs), [`scripts/train.sh`](scripts/train.sh) |
-| Benchmark code | GIFT-Eval, fev-bench, TIME | [`benchmarks/`](benchmarks) |
+| Code | Inference and training | [`src/simons`](https://github.com/Abel-ai-lab/Simons/tree/main/src/simons) |
+| Training recipes | Configurations and scripts | [`configs/`](https://github.com/Abel-ai-lab/Simons/tree/main/configs), [`scripts/train.sh`](https://github.com/Abel-ai-lab/Simons/blob/main/scripts/train.sh) |
+| Benchmark code | GIFT-Eval, fev-bench, TIME | [`benchmarks/`](https://github.com/Abel-ai-lab/Simons/tree/main/benchmarks) |
 | Forecast Explorer | Forecasting demo | [abel-lab/simons-forecast-explorer](https://huggingface.co/spaces/abel-lab/simons-forecast-explorer) |
 
 ## Install
@@ -98,15 +98,15 @@ bash scripts/train.sh 25m data/example/train data/example/covariates
 
 ## Learn More
 
-- [Getting started](docs/GETTING_STARTED.md): input formats, covariates, forecasting options, and fine-tuning
-- [Models](docs/MODEL.md): the four sizes, their scores, CPU memory and time, and the benchmark runs
-- [Training](docs/TRAINING.md)
-- [Training data](docs/DATA.md)
-- [examples/demo.ipynb](examples/demo.ipynb): end-to-end forecasting on a CPU
-- [examples/finetune.ipynb](examples/finetune.ipynb)
+- [Getting started](https://github.com/Abel-ai-lab/Simons/blob/main/docs/GETTING_STARTED.md): input formats, covariates, forecasting options, and fine-tuning
+- [Models](https://github.com/Abel-ai-lab/Simons/blob/main/docs/MODEL.md): the four sizes, their scores, CPU memory and time, and the benchmark runs
+- [Training](https://github.com/Abel-ai-lab/Simons/blob/main/docs/TRAINING.md)
+- [Training data](https://github.com/Abel-ai-lab/Simons/blob/main/docs/DATA.md)
+- [examples/demo.ipynb](https://github.com/Abel-ai-lab/Simons/blob/main/examples/demo.ipynb): end-to-end forecasting on a CPU
+- [examples/finetune.ipynb](https://github.com/Abel-ai-lab/Simons/blob/main/examples/finetune.ipynb)
 - [Forecast Explorer](https://huggingface.co/spaces/abel-lab/simons-forecast-explorer): forecasts from all four models in your browser
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [CHANGELOG.md](CHANGELOG.md)
+- [CONTRIBUTING.md](https://github.com/Abel-ai-lab/Simons/blob/main/CONTRIBUTING.md)
+- [CHANGELOG.md](https://github.com/Abel-ai-lab/Simons/blob/main/CHANGELOG.md)
 
 ## Citation
 
@@ -121,6 +121,6 @@ bash scripts/train.sh 25m data/example/train data/example/covariates
 
 ## License
 
-The code is licensed under [Apache-2.0](LICENSE), and the model weights are licensed under [OpenMDW-1.1](https://huggingface.co/abel-lab/Simons-297M/blob/main/LICENSE).
+The code is licensed under [Apache-2.0](https://github.com/Abel-ai-lab/Simons/blob/main/LICENSE), and the model weights are licensed under [OpenMDW-1.1](https://huggingface.co/abel-lab/Simons-297M/blob/main/LICENSE).
 
 The training datasets retain their respective licenses. The training data [NOTICE.md](https://huggingface.co/datasets/abel-lab/Simons-Pretrain/blob/main/NOTICE.md) lists the relevant licenses and attributions.
