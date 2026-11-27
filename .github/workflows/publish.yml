@@ -30,5 +30,7 @@ jobs:
           fi
       - name: Build
         run: uv build
+      - name: Sign
+        run: uvx pypi-attestations==0.0.31 sign dist/*.whl dist/*.tar.gz
       - name: Publish
-        run: uv publish --trusted-publishing always
+        run: uv publish --trusted-publishing always dist/*.whl dist/*.tar.gz
